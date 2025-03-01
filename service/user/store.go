@@ -15,15 +15,35 @@ func NewStore(db *sql.DB) *Store {
 	return &Store{db: db}
 }
 func (s *Store) GetUserByID(id int) (*model.User, error) {
-	return nil, nil
+	rows, err := s.db.Query("SELECT * FROM users WHERE id = ?", id)
+	if err != nil {
+		return nil, err
+	}
+
+	user := &model.User{}
+	if rows.Next() {
+		err := scanRowIntoUser(rows, user)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, fmt.Errorf("user not found")
+	}
+
+	return user, nil
 }
 
 func (s *Store) CreateUser(user model.User) error {
+	_, err := s.db.Exec("INSERT INTO users (firstName, lastName, email, password) VALUES (?, ?, ?, ?)", user.FirstName, user.LastName, user.Email, user.Password)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (s *Store) GetUserByEmail(email string) (*model.User, error) {
-	rows, err := s.db.Query("SELECT * FROM user WHERE email = ?", email)
+	rows, err := s.db.Query("SELECT * FROM users WHERE email = ?", email)
 	if err != nil {
 		return nil, err
 	}
